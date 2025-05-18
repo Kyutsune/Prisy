@@ -6,12 +6,16 @@ import os
 import asyncio
 from commandes.play import play, loop as play_loop  
 from commandes.ping import ping
+from dotenv import load_dotenv
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="/", intents=intents)
 tree = bot.tree
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
+
 
 @bot.event
 async def on_ready():
@@ -28,4 +32,4 @@ async def on_ready():
     for g in bot.guilds:
         print(f"- {g.name} ({g.id})")
 
-bot.run("MTM3MzQzMDM2OTYwMDQwNTY0Ng.GSo0eo.mED9E-qkKFrhWW3CrCRULSbpj0hi4QTErjRIzw") 
+bot.run(TOKEN)
