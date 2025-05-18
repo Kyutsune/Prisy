@@ -33,5 +33,6 @@ async def on_ready():
     for g in bot.guilds:
         print(f"- {g.name} ({g.id})")
 
-bot.run(TOKEN)
 start_keep_alive()
+bot.run(TOKEN)
+
