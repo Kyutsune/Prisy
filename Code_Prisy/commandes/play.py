@@ -6,10 +6,11 @@ import asyncio
 from commandes.stats.stats import increment_play_count
 
 YDL_OPTIONS = {
-    'format': 'bestaudio/best',
+    'format': 'bestaudio[ext=webm]/bestaudio/best',
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'auto'
+    'default_search': 'auto',
+    'noplaylist': True,
 }
 
 FFMPEG_OPTIONS = {
@@ -17,7 +18,6 @@ FFMPEG_OPTIONS = {
     'options': '-vn'
 }
 
-# La variable loop pour stocker la boucle asyncio principale
 loop = None
 
 def create_source(url):
@@ -29,27 +29,30 @@ def create_source(url):
     )
 
 async def get_audio_source(query):
-    with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-        info = ydl.extract_info(query, download=False)
-        if info is not None and 'entries' in info:
-            info = info['entries'][0]
-        if info is None or 'url' not in info:
-            return None
-        url = info['url']
-        return create_source(url)
+    def extract():
+        with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+            info = ydl.extract_info(query, download=False)
+            if info is not None and 'entries' in info:
+                info = info['entries'][0]
+            return info
+
+    info = await asyncio.to_thread(extract)
+    if info is None or 'url' not in info:
+        return None
+    url = info['url']
+    return create_source(url)
 
 queues = {}
 locks = {}
 
 async def play_next(guild_id, voice_client):
     global loop
-    print(f"[play_next] On va jouer la prochaine musique, nombre de musique encore dans la file d'attente : {len(queues.get(guild_id, []))}")
-    
-    # Vérification de sécurité pour s'assurer que loop n'est pas None
+    print(f"[play_next] On va jouer la prochaine musique, nombre dans la file d'attente : {len(queues.get(guild_id, []))}")
+
     if loop is None:
         print("[play_next] ERREUR: La boucle asyncio est None, utilisation de la boucle courante")
         loop = asyncio.get_event_loop()
-    
+
     if guild_id in queues and queues[guild_id]:
         next_query, next_title = queues[guild_id].pop(0)
         print(f"[play_next] Lecture de : {next_title}")
@@ -64,8 +67,7 @@ async def play_next(guild_id, voice_client):
             print("[play_next] Musique terminée, appel à la suivante")
             if error:
                 print(f"[play_next] Erreur lors de la lecture : {error}")
-            
-            # Vérification de la boucle avant d'appeler run_coroutine_threadsafe
+
             if loop is not None:
                 asyncio.run_coroutine_threadsafe(play_next(guild_id, voice_client), loop)
             else:
@@ -83,8 +85,7 @@ async def play_next(guild_id, voice_client):
 @app_commands.describe(query="Titre ou lien YouTube de la musique")
 async def play(interaction: discord.Interaction, query: str):
     global loop
-    
-    # Assignation de la boucle à chaque appel de commande pour garantir sa présence
+
     if loop is None and hasattr(interaction.client, 'loop'):
         loop = interaction.client.loop
         print(f"[play] Boucle assignée depuis interaction.client: {loop}")
@@ -96,6 +97,7 @@ async def play(interaction: discord.Interaction, query: str):
         return
 
     member = interaction.guild.get_member(interaction.user.id)
+    print(f"[play] Membre trouvé : {member}")
     voice_channel = member.voice.channel if member and member.voice else None
     if not voice_channel:
         await interaction.followup.send("❌ Tu dois être dans un salon vocal.")
@@ -106,13 +108,14 @@ async def play(interaction: discord.Interaction, query: str):
         voice_client = await voice_channel.connect()
 
     with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-        result = ydl.extract_info(f"ytsearch:{query}", download=False)
+        # Extraction dans un thread pour ne pas bloquer la boucle asyncio
+        result = await asyncio.to_thread(lambda: ydl.extract_info(f"ytsearch:{query}", download=False))
         if result is None or 'entries' not in result or not result['entries']:
             await interaction.followup.send("❌ Aucun résultat trouvé pour cette recherche.")
             return
         info = result['entries'][0]
         title = info.get('title', 'musique inconnue')
-        increment_play_count(title)
+        increment_play_count(title, member.name)
 
     guild_id = interaction.guild.id
 
@@ -135,8 +138,7 @@ async def play(interaction: discord.Interaction, query: str):
                 print("[play] Musique terminée, lancement de la suivante")
                 if error:
                     print(f"[play] Erreur lors de la lecture : {error}")
-                
-                # Vérification de la boucle avant d'appeler run_coroutine_threadsafe
+
                 if loop is not None:
                     asyncio.run_coroutine_threadsafe(play_next(guild_id, voice_client), loop)
                 else:

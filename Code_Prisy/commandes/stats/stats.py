@@ -24,12 +24,13 @@ def save_stats_contributeur(stats):
     with open(STATS_CONTRIBUTER_FILE, "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=4)
 
-def increment_play_count(title: str, member: str):
+def increment_play_count(title: str, member):
     print(f"[increment_play_count] Incrémentation du compteur de lecture pour : {title}")
     stats_musique = load_stats_musique()
     stats_musique[title] = stats_musique.get(title, 0) + 1
 
     stats_contributeur = load_stats_contributeur()
-    stats_contributeur[member] = stats_contributeur.get(member, 0) + 1
+    user_id = str(member) 
+    stats_contributeur[user_id] = stats_contributeur.get(user_id, 0) + 1
     save_stats_contributeur(stats_contributeur)
     save_stats_musique(stats_musique)

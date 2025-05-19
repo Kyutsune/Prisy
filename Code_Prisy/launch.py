@@ -6,7 +6,6 @@ import os
 import asyncio
 from commandes.play import play, loop as play_loop  
 from commandes.ping import ping
-from keep_alive import start_keep_alive
 from dotenv import load_dotenv
 
 intents = discord.Intents.default()
@@ -33,6 +32,5 @@ async def on_ready():
     for g in bot.guilds:
         print(f"- {g.name} ({g.id})")
 
-start_keep_alive()
 bot.run(TOKEN)
 
