@@ -31,10 +31,6 @@ async def on_ready():
     tree.add_command(pong)
     tree.add_command(skip)
     await tree.sync(guild=guild)
-    print(f"Commandes synchronisées pour le serveur {guild.id}")
-    print("Commandes synchronisées :")
-    for command in tree.get_commands():
-        print(f"- {command.name}")
     print(f"Connecté en tant que {bot.user}")
     print("Liste des serveurs :")
     for g in bot.guilds:
