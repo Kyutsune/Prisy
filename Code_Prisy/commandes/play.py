@@ -16,8 +16,8 @@ YDL_OPTIONS = {
 }
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -nostdin -thread_queue_size 512',
-    'options': '-vn -bufsize 2048k'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -nostdin -thread_queue_size 1024',
+    'options': '-vn -bufsize 4096k'
 }
 
 loop = None
@@ -72,7 +72,6 @@ async def play_next(guild_id, voice_client):
         if guild_id in locks:
             del locks[guild_id]
 
-@app_commands.guilds(discord.Object(id=GUILD_ID))
 @app_commands.command(name="play", description="Joue une musique depuis YouTube")
 @app_commands.describe(query="Titre ou lien YouTube de la musique")
 async def play(interaction: discord.Interaction, query: str):
