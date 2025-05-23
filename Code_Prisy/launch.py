@@ -4,7 +4,7 @@ from discord import app_commands
 
 import os
 import asyncio
-from commandes.play import play, queue, loop as play_loop
+from commandes.play import play, queue, skip, loop as play_loop
 from commandes.ping import ping
 from commandes.pong import pong
 from dotenv import load_dotenv
@@ -17,17 +17,19 @@ tree = bot.tree
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+GUILD_ID = 748264244822147073  # Ton ID de serveur ici
 
 @bot.event
 async def on_ready():
     global play_loop
     play_loop = bot.loop
-    
-    guild = discord.Object(id=748264244822147073)
+
+    guild = discord.Object(id=GUILD_ID)
     tree.add_command(play)
+    tree.add_command(queue)
     tree.add_command(ping)
     tree.add_command(pong)
-    tree.add_command(queue)
+    tree.add_command(skip)
     await tree.sync(guild=guild)
     print(f"Commandes synchronisées pour le serveur {guild.id}")
     print("Commandes synchronisées :")
@@ -39,4 +41,3 @@ async def on_ready():
         print(f"- {g.name} ({g.id})")
 
 bot.run(TOKEN)
-
