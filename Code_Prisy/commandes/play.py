@@ -5,28 +5,33 @@ import asyncio
 
 from commandes.stats.stats import increment_play_count
 
+# Options yt-dlp : format m4a pour plus de stabilité
 YDL_OPTIONS = {
-    'format': 'bestaudio[ext=webm]/bestaudio/best',
+    'format': 'bestaudio[ext=m4a]/bestaudio/best',
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
     'noplaylist': True,
 }
 
+# Options FFMPEG améliorées pour limiter les coupures / sauts
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -nostdin -thread_queue_size 512',
+    'options': '-vn -bufsize 2048k'
 }
+
 
 loop = None
 
 def create_source(url):
-    return discord.FFmpegPCMAudio(
+    source = discord.FFmpegPCMAudio(
         executable="ffmpeg",
         source=url,
         before_options=FFMPEG_OPTIONS['before_options'],
         options=FFMPEG_OPTIONS['options']
     )
+    # PCMVolumeTransformer permet de gérer le volume plus facilement (volume 0.5 par défaut)
+    return discord.PCMVolumeTransformer(source, volume=0.5)
 
 async def get_audio_source(query):
     def extract():
@@ -42,6 +47,8 @@ async def get_audio_source(query):
     url = info['url']
     return create_source(url)
 
+# Dictionnaire dans lequel je garde les musiques suivantes
+# Types des musiques : 
 queues = {}
 locks = {}
 
@@ -128,6 +135,7 @@ async def play(interaction: discord.Interaction, query: str):
         if voice_client.is_playing():
             queues[guild_id].append((query, title))
             await interaction.followup.send(f"⏸️ **{title}** ajoutée à la file d'attente.")
+            print('queue actuellement : ', queues[guild_id])
         else:
             source = await get_audio_source(query)
             if source is None:
@@ -146,3 +154,15 @@ async def play(interaction: discord.Interaction, query: str):
 
             voice_client.play(source, after=after_playing)
             await interaction.followup.send(f"▶️ Lecture de **{title}**")
+
+
+
+@app_commands.command(name="queue", description="Renvoie la file d'attente")
+async def queue(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    if interaction.guild is None:
+        await interaction.followup.send("❌ Cette commande doit être utilisée dans un serveur.")
+        return
+    
+    await interaction.followup.send(f"File d'attente :\n{queues.get(interaction.guild.id, [])}")

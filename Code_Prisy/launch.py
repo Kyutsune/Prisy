@@ -4,8 +4,9 @@ from discord import app_commands
 
 import os
 import asyncio
-from commandes.play import play, loop as play_loop  
+from commandes.play import play, queue, loop as play_loop
 from commandes.ping import ping
+from commandes.pong import pong
 from dotenv import load_dotenv
 
 intents = discord.Intents.default()
@@ -25,8 +26,13 @@ async def on_ready():
     guild = discord.Object(id=748264244822147073)
     tree.add_command(play)
     tree.add_command(ping)
+    tree.add_command(pong)
+    tree.add_command(queue)
     await tree.sync(guild=guild)
     print(f"Commandes synchronisées pour le serveur {guild.id}")
+    print("Commandes synchronisées :")
+    for command in tree.get_commands():
+        print(f"- {command.name}")
     print(f"Connecté en tant que {bot.user}")
     print("Liste des serveurs :")
     for g in bot.guilds:
