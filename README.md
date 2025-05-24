@@ -109,7 +109,7 @@ python -m bot.main
 
 ## 👨‍💻 Développement
 
-Projet développé par \Papailles & Kyutsune
+Projet développé par Papailles & Kyutsune
 
 TODO : 
 
