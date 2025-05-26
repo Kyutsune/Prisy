@@ -20,37 +20,12 @@ Il est conçu pour être **asynchrone**, stable (pas de déconnexion aléatoire)
 ---
 
 ## ⚙️ Pré-requis
-
-* Python 3.11 ou 3.12
-* `ffmpeg` installé et accessible via le terminal (`ffmpeg -version`)
 * Un fichier `.env` à la racine avec :
 
 ```
 DISCORD_TOKEN=token_bot
 GUILD_ID=id_serveur
 ```
-
----
-
-## 🏐 Structure du projet
-
-```
-Prisy/
-├── bot/
-│   ├── cogs/              # Commandes slash (music.py, utility.py…)
-│   ├── config.py          # TOKEN, GUILD_ID, options globales
-│   ├── main.py            # Point d’entrée du bot
-│   ├── services/          # Extraction audio (yt_dlp), ffmpeg config
-│   └── stats/             # Gestion des fichiers stats JSON
-│       ├── stats_musique.json
-│       ├── stats_contributeur.json
-│       └── stats.py
-├── .env                   # Variables d’environnement (token)
-├── requirements.txt
-└── README.md
-```
-
----
 
 ## 🚀 Lancement
 
@@ -71,30 +46,6 @@ Lancer le bot normalement :
 
 ```bash
 python -m bot.main
-```
-
----
-
-## 🧠 Détails techniques
-
-* **yt\_dlp** est utilisé pour extraire les flux audio YouTube (pas de téléchargement)
-* **FFmpegOpusAudio** est utilisé pour un encodage Opus performant
-* Lecture **asynchrone non bloquante** via `vc.play(..., after=...)`
-* La file d’attente et les accès concurrents sont gérés avec :
-
-  * `self.queues[guild_id]` → file par guilde
-  * `self.locks[guild_id]` → verrou par guilde
-* Les stats sont stockées en local dans des fichiers `.json`
-
----
-
-## 🦖 Commandes à tester
-
-```bash
-/play never gonna give you up
-/queue
-/skip
-/leave
 ```
 
 ---
