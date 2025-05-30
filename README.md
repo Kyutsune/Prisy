@@ -45,7 +45,7 @@ pip install -r requirements.txt
 Lancer le bot normalement :
 
 ```bash
-python -m bot.main
+python3 -m bot.main
 ```
 
 ---
