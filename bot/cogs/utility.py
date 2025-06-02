@@ -7,10 +7,12 @@ class UtilityCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    @app_commands.guilds(discord.Object(id=GUILD_ID))
     @app_commands.command(name="ping", description="Répond Pong !")
     async def ping(self, interaction: discord.Interaction):
         await interaction.response.send_message("Pong !")
 
+    @app_commands.guilds(discord.Object(id=GUILD_ID))
     @app_commands.command(name="pong", description="Répond Ping !")
     async def pong(self, interaction: discord.Interaction):
         await interaction.response.send_message("Ping !")
