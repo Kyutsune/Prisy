@@ -1,37 +1,41 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 from bot.config import GUILD_ID
 
 class UtilityCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
 
-    @app_commands.guilds(discord.Object(id=GUILD_ID))
-    @app_commands.command(name="ping", description="Répond Pong !")
-    async def ping(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Pong !")
+    @discord.slash_command(
+        name="ping",
+        description="Répond Pong !",
+        guild_ids=[GUILD_ID]
+    )
+    async def ping(self, ctx: discord.ApplicationContext):
+        await ctx.respond("Pong !")  # équivalent de interaction.response.send_message() :contentReference[oaicite:0]{index=0}
 
-    @app_commands.guilds(discord.Object(id=GUILD_ID))
-    @app_commands.command(name="pong", description="Répond Ping !")
-    async def pong(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Ping !")
+    @discord.slash_command(
+        name="pong",
+        description="Répond Ping !",
+        guild_ids=[GUILD_ID]
+    )
+    async def pong(self, ctx: discord.ApplicationContext):
+        await ctx.respond("Ping !")
 
-    @app_commands.guilds(discord.Object(id=GUILD_ID))
-    @app_commands.command(name="leave", description="Fait quitter le bot du salon vocal")
-    async def leave(self, interaction: discord.Interaction):
-        vc = interaction.guild.voice_client
+    @discord.slash_command(
+        name="leave",
+        description="Fait quitter le bot du salon vocal",
+        guild_ids=[GUILD_ID]
+    )
+    async def leave(self, ctx: discord.ApplicationContext):
+        vc = ctx.guild.voice_client
         if not vc or not vc.is_connected():
-            return await interaction.response.send_message(
-                "❌ Je ne suis pas connecté en vocal.", 
+            return await ctx.respond(
+                "❌ Je ne suis pas connecté en vocal.",
                 ephemeral=True
             )
-        # Déconnecte le bot
-        await interaction.response.send_message(
-        "👋 Je quitte le salon vocal",
-            ephemeral=False
-        )
+        await ctx.respond("👋 Je quitte le salon vocal")
         await vc.disconnect()
 
-async def setup(bot: commands.Bot):
-    await bot.add_cog(UtilityCog(bot))
+def setup(bot: discord.Bot):
+    bot.add_cog(UtilityCog(bot))
