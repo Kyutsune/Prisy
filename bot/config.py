@@ -1,3 +1,8 @@
+"""
+bot/config.py
+Configuration du bot Discord PrisyBot
+Contient les options de configuration pour YouTubeDL, FFmpeg et le token Discord.
+"""
 import os
 from dotenv import load_dotenv
 
@@ -5,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ID de votre serveur de prédilection (pour le déploiement de slash-commands)
-GUILD_ID = int(os.getenv("GUILD_ID", 0))
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 # Options YouTubeDL & FFmpeg
 YDL_OPTIONS = {

@@ -1,0 +1,8 @@
+{
+  // Chemin vers l’interpréteur Python de ton venv
+  "python.defaultInterpreterPath": "C:/Users/verre/Documents/GitHub/Prisy/venv/Scripts/python.exe",
+
+  // Active le formatage automatique du code
+  "editor.formatOnSave": true,
+  "files.insertFinalNewline": true
+}
