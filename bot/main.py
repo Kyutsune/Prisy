@@ -26,7 +26,8 @@ AudioSource.__del__ = _safe_del
 logging.basicConfig(level=logging.INFO)
 
 intents = discord.Intents.default()
-intents.message_content = False
+intents.message_content = False       # toujours utile pour limiter les privilèges
+intents.voice_states    = True        # indispensable pour gérer les voix
 
 class PrisyBot(discord.Bot):
     """
