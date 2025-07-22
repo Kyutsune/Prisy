@@ -61,13 +61,6 @@ async def on_ready():
     """
     logging.info("✅ Connecté en tant que %s", bot.user)
 
-@bot.event
-async def on_message():
-    """
-    Événement appelé lorsqu'un message est reçu.
-    """
-    return
-
 bot.load_extension("bot.cogs.utility")
 bot.load_extension("bot.cogs.music")
 
