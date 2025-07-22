@@ -138,7 +138,7 @@ class MusicCog(commands.Cog):
             try:
                 vc = await channel.connect()
             except (discord.ClientException, discord.errors.ConnectionClosed, asyncio.TimeoutError) as e:
-                log.error(f"[MusicCog] Échec de connexion vocale : {e}", exc_info=True)
+                log.error("[MusicCog] Échec de connexion vocale : %s", e, exc_info=True)
                 return await ctx.followup.send(
                     "❌ Impossible de rejoindre le salon vocal.", ephemeral=True
                 )
