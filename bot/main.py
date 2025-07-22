@@ -10,7 +10,8 @@ logging.basicConfig(level=logging.INFO)
 
 # ── Intents ────────────────────────────────────────────────────────
 intents = discord.Intents.default()
-intents.message_content = False
+intents.message_content = False       # toujours utile pour limiter les privilèges
+intents.voice_states    = True        # indispensable pour gérer les voix
 
 # ── Votre Bot personnalisé pour gérer le shutdown proprement ───────
 class PrisyBot(discord.Bot):

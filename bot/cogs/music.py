@@ -104,10 +104,15 @@ class MusicCog(commands.Cog):
                 "❌ Tu dois être dans un salon vocal.", ephemeral=True
             )
 
-        # Connexion ou déplacement
         vc = ctx.guild.voice_client
         if not vc or not vc.is_connected():
-            vc = await channel.connect()
+            try:
+                vc = await channel.connect()
+            except (discord.ClientException, discord.errors.ConnectionClosed, asyncio.TimeoutError) as e:
+                log.error(f"[MusicCog] Échec de connexion vocale : {e}", exc_info=True)
+                return await ctx.followup.send(
+                    "❌ Impossible de rejoindre le salon vocal.", ephemeral=True
+                )
         elif vc.channel.id != channel.id:
             await vc.move_to(channel)
 
