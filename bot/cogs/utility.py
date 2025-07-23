@@ -2,7 +2,6 @@
 Cog utilitaires : ping, pong, leave.
 """
 
-import discord
 from discord import app_commands, Interaction, Object
 from discord.ext import commands
 
