@@ -1,61 +1,39 @@
 """
-Module: bot.cogs.utility
-
-Cog pour les commandes utilitaires du bot.
-Contient des commandes pour répondre aux ping/pong et pour quitter le salon vocal.
-Cette classe utilise py-cord pour gérer les interactions avec les utilisateurs.
+Cog utilitaires : ping, pong, leave.
 """
+
 import discord
+from discord import app_commands, Interaction, Object
 from discord.ext import commands
+
 from bot.config import GUILD_ID
 
+
 class UtilityCog(commands.Cog):
-    """
-    Cog pour les commandes utilitaires du bot.
-    Contient des commandes pour répondre aux ping/pong et pour quitter le salon vocal.
-    """
-    def __init__(self, bot: discord.Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.bot.tree.add_command(self.ping, guild=Object(id=GUILD_ID))
+        self.bot.tree.add_command(self.pong, guild=Object(id=GUILD_ID))
+        self.bot.tree.add_command(self.leave, guild=Object(id=GUILD_ID))
 
-    @discord.slash_command(
-        name="ping",
-        description="Répond Pong !",
-        guild_ids=[GUILD_ID]
-    )
-    async def ping(self, ctx: discord.ApplicationContext):
-        """Répond Pong !"""
-        await ctx.respond("Pong !")
+    @app_commands.command(name="ping", description="Répond Pong !")
+    async def ping(self, interaction: Interaction):
+        await interaction.response.send_message("Pong !")
 
-    @discord.slash_command(
-        name="pong",
-        description="Répond Ping !",
-        guild_ids=[GUILD_ID]
-    )
-    async def pong(self, ctx: discord.ApplicationContext):
-        """Répond Ping !"""
-        await ctx.respond("Ping !")
+    @app_commands.command(name="pong", description="Répond Ping !")
+    async def pong(self, interaction: Interaction):
+        await interaction.response.send_message("Ping !")
 
-    @discord.slash_command(
-        name="leave",
-        description="Fait quitter le bot du salon vocal",
-        guild_ids=[GUILD_ID]
-    )
-    async def leave(self, ctx: discord.ApplicationContext):
-        """
-        Fait quitter le bot du salon vocal.
-        Si le bot n'est pas connecté à un salon vocal, il répond avec un message d'erreur.
-        """
-        vc = ctx.guild.voice_client
+    @app_commands.command(name="leave", description="Fait quitter le bot du salon vocal")
+    async def leave(self, interaction: Interaction):
+        vc = interaction.guild.voice_client
         if not vc or not vc.is_connected():
-            return await ctx.respond(
-                "❌ Je ne suis pas connecté en vocal.",
-                ephemeral=True
+            return await interaction.response.send_message(
+                "❌ Je ne suis pas connecté en vocal.", ephemeral=True
             )
-        await ctx.respond("👋 Je quitte le salon vocal")
+        await interaction.response.send_message("👋 Je quitte le salon vocal")
         await vc.disconnect()
 
-def setup(bot: discord.Bot):
-    """
-    Fonction pour ajouter le cog UtilityCog au bot.
-    """
-    bot.add_cog(UtilityCog(bot))
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(UtilityCog(bot))
