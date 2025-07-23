@@ -39,7 +39,7 @@ source venv/bin/activate  # ou .\venv\Scripts\activate sous Windows
 Installer les dépendances :
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt # ou pip install -r .\requirements.txt sous Windows
 ```
 
 Lancer le bot normalement :

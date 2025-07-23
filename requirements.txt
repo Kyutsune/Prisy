@@ -1,5 +1,7 @@
-py-cord
+# Version de pycord qui fix le bug de connexion
+git+https://github.com/Pycord-Development/pycord
 Flask>=2.2.5
 yt-dlp>=2024.4.9
 python-dotenv>=1.0.1
 PyNaCl
+pylint

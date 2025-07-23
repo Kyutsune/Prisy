@@ -1,54 +1,68 @@
-import asyncio
+"""
+PrisyBot - Un bot Discord pour la musique et les utilitaires
+Ce bot utilise discord.py pour gérer les interactions avec Discord 
+et yt-dlp pour la lecture de musique.
+Il inclut des fonctionnalités pour jouer de la musique depuis YouTube, 
+gérer une file d'attente,
+et interagir avec les salons vocaux.
+"""
 import logging
-import signal
 import discord
-from discord.ext import commands
+from discord.player import AudioSource
 from bot.config import GUILD_ID, TOKEN
 
-# ── Logging ─────────────────────────────────────────────────────────
+# Monkey‑patch pour ignorer AttributeError quand _process est manquant
+_original_del = AudioSource.__del__
+
+def _safe_del(self):
+    try:
+        _original_del(self)
+    except AttributeError:
+        # Si _process n'existe pas, on passe
+        pass
+
+AudioSource.__del__ = _safe_del
+
 logging.basicConfig(level=logging.INFO)
 
-# ── Intents ────────────────────────────────────────────────────────
 intents = discord.Intents.default()
-intents.message_content = False
+intents.message_content = False       # toujours utile pour limiter les privilèges
+intents.voice_states    = True        # indispensable pour gérer les voix
 
-# ── Votre Bot personnalisé pour gérer le shutdown proprement ───────
 class PrisyBot(discord.Bot):
+    """
+    PrisyBot - Un bot Discord pour la musique et les utilitaires.
+    Ce bot utilise discord.py pour gérer les interactions avec Discord
+    et yt-dlp pour la lecture de musique.
+    """
     def __init__(self):
         super().__init__(
             intents=intents,
-            debug_guilds=[GUILD_ID]  # sync automatique de vos slash‑commands 
+            debug_guilds=[GUILD_ID]
         )
 
     async def close(self):
-        # Avant de fermer la connexion, déconnecter tous les voice clients
         logging.info("🔌 Shutdown: déconnexion des salons vocaux…")
         for guild in self.guilds:
             vc = guild.voice_client
             if vc and vc.is_connected():
-                logging.info(f"  • Déconnexion de {guild.name}")
+                logging.info("Déconnexion de %s", guild.name)
                 await vc.disconnect()
         logging.info("🔌 Fermeture du Bot")
         await super().close()
 
-# ── Instanciation ──────────────────────────────────────────────────
 bot = PrisyBot()
 
-# ── Événements ────────────────────────────────────────────────────
 @bot.event
 async def on_ready():
-    logging.info(f"✅ Connecté en tant que {bot.user}")
-    # (Pas besoin d'appeler sync_commands, debug_guilds s'en occupe)
+    """
+    Événement appelé lorsque le bot est prêt.
+    Affiche un message de confirmation dans la console.
+    """
+    logging.info("✅ Connecté en tant que %s", bot.user)
 
-@bot.event
-async def on_message(message: discord.Message):
-    # Vous voulez ignorer tous les messages texte pour ne garder que les slash
-    return
-
-# ── Chargement des cogs ────────────────────────────────────────────
 bot.load_extension("bot.cogs.utility")
 bot.load_extension("bot.cogs.music")
 
-# ── Lancement ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     bot.run(TOKEN)

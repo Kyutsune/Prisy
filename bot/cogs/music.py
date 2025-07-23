@@ -1,9 +1,18 @@
+"""
+Module: MusicCog
+
+Cog pour les commandes de musique du bot.
+Contient des commandes pour jouer de la musique depuis YouTube, gérer une file d'attente,
+et interagir avec le salon vocal.
+Cette classe utilise py-cord pour gérer les interactions avec les utilisateurs et la lecture audio.
+"""
 import asyncio
 import logging
 
 import discord
 from discord.ext import commands
 import yt_dlp
+from yt_dlp.utils import DownloadError
 
 from bot.config import GUILD_ID, YDL_OPTIONS, FFMPEG_OPTIONS
 from bot.stats.stats import increment_play_count
@@ -43,6 +52,11 @@ async def _get_audio_source(query: str) -> discord.AudioSource | None:
 
 
 class MusicCog(commands.Cog):
+    """
+    Cog pour les commandes de musique du bot.
+    Contient des commandes pour jouer de la musique depuis YouTube, gérer une file d'attente,
+    et interagir avec le salon vocal.
+    """
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         # file et verrou par guild
@@ -55,25 +69,31 @@ class MusicCog(commands.Cog):
         """
         queue = self.queues.get(guild_id, [])
         if not queue:
-            log.info(f"[MusicCog] Queue vide pour guild {guild_id}, disconnect")
+            log.info("[MusicCog] Queue vide pour guild %s, disconnect", guild_id)
             return await vc.disconnect()
 
         query, title = queue.pop(0)
-        log.info(f"[MusicCog] Now playing {title!r} ({query}) in guild {guild_id}")
+        log.info(
+            "[MusicCog] Now playing %r (%s) in guild %s", title, query, guild_id
+        )
 
         # Extraction du flux
         try:
             source = await _get_audio_source(query)
             if source is None:
                 raise RuntimeError("No URL in info")
-        except Exception as e:
-            log.error(f"[MusicCog] Erreur extraction pour {title!r}: {e}", exc_info=True)
+        except (DownloadError, RuntimeError, asyncio.TimeoutError, discord.ClientException) as e:
+            log.error(
+                "[MusicCog] Erreur extraction pour %r: %s",
+                title,
+                e,
+                exc_info=True
+            )
             return await self._play_next(guild_id, vc)
-
         # Callback pour chaîner
         def _after(err: Exception | None):
             if err:
-                log.error(f"[MusicCog] Playback error on {title!r}: {err}", exc_info=True)
+                log.error("[MusicCog] Playback error on %r: %s", title, err, exc_info=True)
             # schedule next
             self.bot.loop.call_soon_threadsafe(
                 lambda: asyncio.create_task(self._play_next(guild_id, vc))
@@ -82,8 +102,8 @@ class MusicCog(commands.Cog):
         # Lancement non-bloquant
         try:
             vc.play(source, after=_after)
-        except Exception as e:
-            log.error(f"[MusicCog] Impossible de jouer {title!r}: {e}", exc_info=True)
+        except (DownloadError, RuntimeError, asyncio.TimeoutError, discord.ClientException) as e:
+            log.error("[MusicCog] Erreur extraction pour %r: %s",title,e,exc_info=True)
             return await self._play_next(guild_id, vc)
 
     @discord.slash_command(
@@ -94,8 +114,17 @@ class MusicCog(commands.Cog):
     async def play(
         self,
         ctx: discord.ApplicationContext,
-        query: discord.Option(str, "Titre ou URL YouTube", required=True)
+        query: str = discord.Option(
+            description="Titre ou URL YouTube",
+            required=True
+        )
     ):
+        """
+        Joue une musique depuis YouTube.
+        Si le bot n'est pas connecté, il rejoint le salon vocal de l'utilisateur.
+        Si le bot est déjà connecté, il se déplace dans le salon vocal de l'utilisateur.
+        Incrémente les statistiques de la musique et du contributeur.
+        """
         # defer initial response
         await ctx.defer()
         channel = getattr(ctx.author.voice, "channel", None)
@@ -104,10 +133,15 @@ class MusicCog(commands.Cog):
                 "❌ Tu dois être dans un salon vocal.", ephemeral=True
             )
 
-        # Connexion ou déplacement
         vc = ctx.guild.voice_client
         if not vc or not vc.is_connected():
-            vc = await channel.connect()
+            try:
+                vc = await channel.connect()
+            except (discord.ClientException, discord.errors.ConnectionClosed, asyncio.TimeoutError) as e:
+                log.error("[MusicCog] Échec de connexion vocale : %s", e, exc_info=True)
+                return await ctx.followup.send(
+                    "❌ Impossible de rejoindre le salon vocal.", ephemeral=True
+                )
         elif vc.channel.id != channel.id:
             await vc.move_to(channel)
 
@@ -144,6 +178,10 @@ class MusicCog(commands.Cog):
         guild_ids=[GUILD_ID]
     )
     async def queue(self, ctx: discord.ApplicationContext):
+        """
+        Affiche la file d'attente actuelle sous forme d'embed.
+        Si la file est vide, répond avec un message d'erreur.
+        """
         guild_id = ctx.guild.id
         q = self.queues.get(guild_id, [])
         if not q:
@@ -164,6 +202,10 @@ class MusicCog(commands.Cog):
         guild_ids=[GUILD_ID]
     )
     async def skip(self, ctx: discord.ApplicationContext):
+        """
+        Passe à la musique suivante et affiche le titre de la prochaine piste.
+        Si le bot n'est pas connecté ou ne joue pas, répond avec un message d'erreur.
+        """
         guild_id = ctx.guild.id
         vc = ctx.guild.voice_client
         if not vc or not vc.is_connected():
@@ -194,4 +236,5 @@ class MusicCog(commands.Cog):
             await ctx.respond("⏭️ Fin de la file.")
 
 def setup(bot: commands.Bot):
+    """Configuration de la cog Music."""
     bot.add_cog(MusicCog(bot))
